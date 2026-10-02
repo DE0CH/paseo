@@ -6,6 +6,16 @@ appId: dev.de0ch.paseo
       visible: "Open in.*Paseo.*\\?"
     commands:
       - tapOn: "Open"
+# upstream's push code asks for notification permission at start; the alert covers the page
+- extendedWaitUntil:
+    visible: ".*Would Like to Send You Notifications.*"
+    timeout: 20000
+    optional: true
+- runFlow:
+    when:
+      visible: ".*Would Like to Send You Notifications.*"
+    commands:
+      - tapOn: "Don.t Allow"
 - extendedWaitUntil:
     visible: "Paired with Jarvis"
     timeout: 60000

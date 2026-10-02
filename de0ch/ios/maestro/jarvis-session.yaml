@@ -1,6 +1,11 @@
 # A started OpenCode session (SESSION_ID / SESSION_TITLE from Jarvis) is imported and connects.
 appId: dev.de0ch.paseo
 ---
+- runFlow:
+    when:
+      visible: ".*Would Like to Send You Notifications.*"
+    commands:
+      - tapOn: "Don.t Allow"
 - extendedWaitUntil:
     visible:
       id: "jarvis-session-${SESSION_ID}"
