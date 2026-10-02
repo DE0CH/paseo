@@ -26,6 +26,9 @@ concurrency:
 
 env:
   ONNXRUNTIME_NODE_INSTALL: skip
+  # Every step, not just prebuild: Xcode's "Bundle React Native code" phase re-reads app.config.js
+  # and embeds that config in the app (without it the build gets upstream's config: no Jarvis).
+  APP_VARIANT: de0ch
   JARVIS_URL: https://jarvis.deyaochen.com
 
 jobs:
@@ -67,6 +70,7 @@ jobs:
             -derivedDataPath build/sim CODE_SIGNING_ALLOWED=NO build | tail -n 40
 
       - name: Simulator test (Jarvis discovery)
+        timeout-minutes: 25
         env:
           JARVIS_E2E_CLIENT_ID: ${{ secrets.JARVIS_E2E_CLIENT_ID }}
           JARVIS_E2E_CLIENT_SECRET: ${{ secrets.JARVIS_E2E_CLIENT_SECRET }}
