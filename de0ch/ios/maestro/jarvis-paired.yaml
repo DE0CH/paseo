@@ -1,0 +1,15 @@
+# The app was launched with a Jarvis token (launch arguments) and opened on Settings → Jarvis.
+appId: dev.de0ch.paseo
+---
+- runFlow:
+    when:
+      visible: "Open in.*Paseo.*\\?"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible: "Paired with Jarvis"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "OpenCode sessions"
+    timeout: 10000
+- takeScreenshot: jarvis-paired

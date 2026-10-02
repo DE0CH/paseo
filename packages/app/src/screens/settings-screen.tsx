@@ -134,6 +134,8 @@ import {
 import { useLastWorkspaceSelection } from "@/stores/navigation-active-workspace-store";
 import { returnFromSettings, type SettingsView } from "@/navigation/settings-navigation";
 import { isNative, isWeb } from "@/constants/platform";
+import { isJarvisEnabled } from "@/jarvis/jarvis";
+import { JarvisSection } from "@/jarvis/jarvis-section";
 
 // ---------------------------------------------------------------------------
 // View model
@@ -214,6 +216,10 @@ const SIDEBAR_SECTION_ITEMS: SidebarSectionItem[] = [
   },
   { id: "diagnostics", labelKey: "settings.sections.diagnostics", icon: Stethoscope },
   { id: "about", labelKey: "settings.sections.about", icon: Info },
+  // Deyao's build: Jarvis lists his OpenCode sessions (src/jarvis).
+  ...(isJarvisEnabled
+    ? [{ id: "jarvis" as const, labelKey: "Jarvis", icon: Server, Content: JarvisSection }]
+    : []),
 ];
 
 function isSectionAvailable(item: SidebarSectionItem, isDesktopApp: boolean): boolean {

@@ -2018,6 +2018,16 @@ export class HostRuntimeStore {
     }
   }
 
+  /**
+   * Adds or refreshes a host from a pairing link the app fetched itself from a
+   * service the user signed in to (Jarvis), so there is no one to ask.
+   */
+  async importTrustedConnectionLink(url: string, label?: string): Promise<HostProfile> {
+    await this.loadRegistry();
+    const { offer, password } = parseOfferConnectionUrl(url);
+    return this.upsertConnectionFromOffer(offer, label, password);
+  }
+
   private async upsertConnectionFromOffer(
     offer: ConnectionOffer,
     label?: string,

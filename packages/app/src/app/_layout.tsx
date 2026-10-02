@@ -131,6 +131,7 @@ import {
 import { buildNotificationRoute, resolveNotificationTarget } from "@/utils/notification-routing";
 import { navigateToAgent } from "@/utils/navigate-to-agent";
 import { PluginCatalogSync } from "@/plugins";
+import { JarvisBoot } from "@/jarvis/jarvis-boot";
 import {
   ensureOsNotificationPermission,
   WEB_NOTIFICATION_CLICK_EVENT,
@@ -672,6 +673,7 @@ function ProvidersWrapper({ children }: { children: ReactNode }) {
       <VoiceProvider>
         <DesktopWindowControlsSync />
         <OfferLinkListener />
+        <JarvisBoot />
         <HostSessionManager />
         <FaviconStatusSync />
         {children}

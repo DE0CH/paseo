@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Settings,
   Terminal,
+  Server,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { HostProfile } from "@/types/host-connection";
@@ -26,9 +27,10 @@ import { openExternalUrl } from "@/utils/open-external-url";
 import { isFdroidBuild } from "@/constants/build-profile";
 import { isWeb, isNative } from "@/constants/platform";
 import { isElectronRuntime } from "@/desktop/host";
+import { isJarvisEnabled } from "@/jarvis/jarvis";
 
 interface WelcomeAction {
-  key: "scan-qr" | "direct-connection" | "remote-ssh" | "paste-pairing-link";
+  key: "jarvis" | "scan-qr" | "direct-connection" | "remote-ssh" | "paste-pairing-link";
   label: string;
   testID: string;
   primary: boolean;
@@ -269,6 +271,18 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
       primary: false,
       icon: Terminal,
       onPress: handleOpenRemoteSsh,
+    });
+  }
+
+  if (isJarvisEnabled) {
+    for (const action of actions) action.primary = false;
+    actions.unshift({
+      key: "jarvis",
+      label: "Pair with Jarvis",
+      testID: "welcome-jarvis",
+      primary: true,
+      icon: Server,
+      onPress: () => router.push("/settings/jarvis"),
     });
   }
 

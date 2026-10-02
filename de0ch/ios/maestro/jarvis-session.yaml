@@ -1,0 +1,17 @@
+# A started OpenCode session (SESSION_ID / SESSION_TITLE from Jarvis) is imported and connects.
+appId: dev.de0ch.paseo
+---
+- extendedWaitUntil:
+    visible:
+      id: "jarvis-session-${SESSION_ID}"
+    timeout: 90000
+- assertVisible: "${SESSION_TITLE}"
+- extendedWaitUntil:
+    visible: "Online.*"
+    timeout: 120000
+- takeScreenshot: jarvis-session-online
+- tapOn:
+    id: "jarvis-open-${SESSION_ID}"
+- waitForAnimationToEnd:
+    timeout: 15000
+- takeScreenshot: jarvis-session-opened

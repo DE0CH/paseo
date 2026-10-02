@@ -1,0 +1,101 @@
+# Deyao's build of the iOS app (DE0CH/paseo fork): builds for the simulator, checks on it that the
+# app finds an OpenCode session through Jarvis and connects (Maestro), then archives, cloud-signs
+# and uploads to TestFlight (team S64YL394S3, internal group "Owner" gets every build).
+name: de0ch iOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: "Upload to TestFlight after the simulator test"
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+    paths:
+      - "packages/app/**"
+      - "packages/client/**"
+      - "packages/protocol/**"
+      - "de0ch/ios/**"
+      - ".github/workflows/de0ch-ios.yml"
+      - "package-lock.json"
+
+concurrency:
+  group: de0ch-ios
+  cancel-in-progress: false
+
+env:
+  ONNXRUNTIME_NODE_INSTALL: skip
+  JARVIS_URL: https://jarvis.deyaochen.com
+
+jobs:
+  ios:
+    if: github.repository == 'DE0CH/paseo'
+    runs-on: macos-26
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        # Built with the iOS 26 SDK: an app linked against iOS 27's SDK must adopt the UIScene
+        # life cycle, which Expo SDK 54's template does not.
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_26*.app | grep -v -i beta | sort -V | tail -1)
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: node scripts/npm-retry.mjs ci
+
+      - name: Generate the iOS project
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}.${{ github.run_attempt }}
+        run: de0ch/ios/prepare.sh
+
+      - name: Build for the simulator
+        working-directory: packages/app/ios
+        run: |
+          set -o pipefail
+          xcodebuild -workspace Paseo.xcworkspace -scheme Paseo -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/sim CODE_SIGNING_ALLOWED=NO build | tail -n 40
+
+      - name: Simulator test (Jarvis discovery)
+        env:
+          JARVIS_E2E_CLIENT_ID: ${{ secrets.JARVIS_E2E_CLIENT_ID }}
+          JARVIS_E2E_CLIENT_SECRET: ${{ secrets.JARVIS_E2E_CLIENT_SECRET }}
+        run: de0ch/ios/simulator-test.sh packages/app/ios/build/sim/Build/Products/Release-iphonesimulator/Paseo.app
+
+      - name: Keep the test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-test
+          path: de0ch-test-output/
+          if-no-files-found: ignore
+
+      - name: Archive, sign and upload to TestFlight
+        if: github.event_name == 'push' || inputs.upload
+        working-directory: packages/app/ios
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          set -o pipefail
+          KEY="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          printf '%s\n' "$ASC_PRIVATE_KEY" > "$KEY"
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          xcodebuild -workspace Paseo.xcworkspace -scheme Paseo -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Paseo.xcarchive" \
+            DEVELOPMENT_TEAM=S64YL394S3 CODE_SIGN_STYLE=Automatic "${AUTH[@]}" archive | tail -n 40
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Paseo.xcarchive" \
+            -exportOptionsPlist "$GITHUB_WORKSPACE/de0ch/ios/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}" | tail -n 40
+          rm -f "$KEY"

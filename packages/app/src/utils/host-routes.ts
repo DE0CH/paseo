@@ -507,6 +507,7 @@ export const SETTINGS_SECTION_SLUGS = [
   "permissions",
   "diagnostics",
   "about",
+  "jarvis",
 ] as const;
 
 export type SettingsSectionSlug = (typeof SETTINGS_SECTION_SLUGS)[number];

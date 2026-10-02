@@ -78,6 +78,12 @@ const variants = {
       fallbackRelativePath: "./.secrets/GoogleService-Info.prod.plist",
     }),
   },
+  // Deyao's own build (DE0CH/paseo): TestFlight on his team, finds OpenCode sessions through Jarvis.
+  de0ch: {
+    name: "Paseo",
+    packageId: "dev.de0ch.paseo",
+    jarvis: { url: "https://jarvis.deyaochen.com", scheme: "paseo-de0ch" },
+  },
   development: {
     name: "Paseo Debug",
     packageId: "sh.paseo.debug",
@@ -102,7 +108,7 @@ export default {
     version: nativeReleaseVersion.appVersion,
     orientation: "portrait",
     icon: "./assets/images/icon.png",
-    scheme: "paseo",
+    scheme: variant.jarvis ? ["paseo", variant.jarvis.scheme] : "paseo",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
@@ -189,10 +195,15 @@ export default {
       fdroidBuild: isFdroidBuild,
       profileBuild: isProfileBuild,
       router: {},
-      eas: {
-        projectId: "0e7f65ce-0367-46c8-a238-2b65963d235a",
-      },
+      ...(variant.jarvis ? { jarvis: variant.jarvis } : {}),
+      ...(variant.jarvis
+        ? {}
+        : {
+            eas: {
+              projectId: "0e7f65ce-0367-46c8-a238-2b65963d235a",
+            },
+          }),
     },
-    owner: "getpaseo",
+    ...(variant.jarvis ? {} : { owner: "getpaseo" }),
   },
 };
