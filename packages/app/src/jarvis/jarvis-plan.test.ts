@@ -91,7 +91,7 @@ describe("isAccessRefusal", () => {
   });
 
   it("is a refusal for a non-JSON 403, not for Jarvis's own JSON 403", () => {
-    const finalUrl = "https://jarvis.deyaochen.com/api/remotes";
+    const finalUrl = "https://jarvis2.deyaochen.com/api/remotes";
     expect(isAccessRefusal({ finalUrl, status: 403, contentType: "text/html" })).toBe(true);
     expect(isAccessRefusal({ finalUrl, status: 403, contentType: "application/json" })).toBe(false);
     expect(isAccessRefusal({ finalUrl, status: 200, contentType: "application/json" })).toBe(false);

@@ -29,7 +29,7 @@ env:
   # Every step, not just prebuild: Xcode's "Bundle React Native code" phase re-reads app.config.js
   # and embeds that config in the app (without it the build gets upstream's config: no Jarvis).
   APP_VARIANT: de0ch
-  JARVIS_URL: https://jarvis.deyaochen.com
+  JARVIS_URL: https://jarvis2.deyaochen.com
 
 jobs:
   ios:
@@ -96,9 +96,25 @@ jobs:
           KEY="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
           printf '%s\n' "$ASC_PRIVATE_KEY" > "$KEY"
           AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          # The archive is built UNSIGNED: signing it makes automatic signing mint an Apple Development certificate on
+          # every fresh runner, and the team is at Apple's limit (claude-env lessons/75). An unsigned bundle asks for no
+          # entitlements and the export keeps only what a bundle asks for, so the app is ad-hoc signed (no certificate)
+          # with its entitlements first; the export cloud-signs it with the managed distribution certificate.
           xcodebuild -workspace Paseo.xcworkspace -scheme Paseo -configuration Release \
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Paseo.xcarchive" \
-            DEVELOPMENT_TEAM=S64YL394S3 CODE_SIGN_STYLE=Automatic "${AUTH[@]}" archive | tail -n 40
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM=S64YL394S3 archive | tail -n 40
+          app="$(ls -d "$RUNNER_TEMP"/Paseo.xcarchive/Products/Applications/*.app | head -1)"
+          ent_src="$(ls Paseo/*.entitlements 2>/dev/null | head -1 || true)"
+          ent="$RUNNER_TEMP/app.entitlements"
+          if [ -n "$ent_src" ]; then sed 's#<string>development</string>#<string>production</string>#' "$ent_src" > "$ent"; plutil -lint "$ent"; fi
+          find "$app" \( -name "*.framework" -o -name "*.dylib" -o -name "*.appex" \) -print \
+            | awk '{ print gsub("/", "/"), $0 }' | sort -rn | cut -d' ' -f2- | while IFS= read -r b; do
+              codesign --force --sign - --timestamp=none "$b"
+            done
+          if [ -n "$ent_src" ]; then codesign --force --sign - --timestamp=none --entitlements "$ent" --generate-entitlement-der "$app"
+          else codesign --force --sign - --timestamp=none "$app"; fi
+          codesign -d --entitlements - "$app" 2>&1 | tail -n 20
+          codesign --verify --deep --strict "$app"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Paseo.xcarchive" \
             -exportOptionsPlist "$GITHUB_WORKSPACE/de0ch/ios/ExportOptions.plist" \
             -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}" | tail -n 40

@@ -82,7 +82,7 @@ const variants = {
   de0ch: {
     name: "Paseo",
     packageId: "dev.de0ch.paseo",
-    jarvis: { url: "https://jarvis.deyaochen.com", scheme: "paseo-de0ch" },
+    jarvis: { url: "https://jarvis2.deyaochen.com", scheme: "paseo-de0ch" },
   },
   development: {
     name: "Paseo Debug",
