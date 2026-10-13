@@ -42,7 +42,8 @@ if [[ "$code" != 200 ]]; then
   xcrun simctl launch "$UDID" dev.de0ch.paseo
   sleep 20
   xcrun simctl io "$UDID" screenshot "$OUT/final.png" || true
-  xcrun simctl spawn "$UDID" launchctl list | grep -q dev.de0ch.paseo || { echo "the app isn't running 20 s after launch"; exit 1; }
+  xcrun simctl spawn "$UDID" launchctl list > "$OUT/launchctl.txt" || true   # to a file: grep -q on a pipe SIGPIPEs it
+  grep -q dev.de0ch.paseo "$OUT/launchctl.txt" || { echo "the app isn't running 20 s after launch"; exit 1; }
   xcrun simctl shutdown "$UDID" || true
   xcrun simctl delete "$UDID" || true
   exit 0
