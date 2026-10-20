@@ -1,7 +1,8 @@
 // Jarvis (Deyao's self-hosted session controller) as a source of hosts: pair
-// this install with Jarvis once, then import every OpenCode session's daemon
+// this install with Jarvis once, then import every Paseo-fronted session's daemon
+// (OpenCode and Claude Code · Paseo)
 // automatically, named after the session, and drop the ones that are gone.
-// API: selfhost/API.md in DE0CH/claude-env (/api/devices/pair, /api/remotes).
+// API: docs/API.md in DE0CH/jarvis2 ("Paired apps": /api/devices/pair, /api/remotes).
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import * as Crypto from "expo-crypto";
@@ -12,6 +13,7 @@ import { AppState, Platform, Settings } from "react-native";
 import { getHostRuntimeStore } from "@/runtime/host-runtime";
 import {
   isAccessRefusal,
+  JARVIS_REMOTES_PATH,
   parsePairRedirect,
   planJarvisSync,
   type JarvisImports,
@@ -46,7 +48,7 @@ export interface JarvisState {
   paired: boolean;
   pairing: boolean;
   syncing: boolean;
-  /** Every OpenCode session Jarvis lists, paused ones included. */
+  /** Every Paseo session Jarvis lists (OpenCode and Claude Code), paused ones included. */
   sessions: JarvisRemote[];
   /** sessionId -> serverId of the imported host. */
   imports: JarvisImports;
@@ -231,7 +233,7 @@ export async function unpairJarvis(): Promise<void> {
   );
 }
 
-/** Lists the OpenCode sessions and brings the imported hosts in line with them. Calls are queued. */
+/** Lists the Paseo sessions and brings the imported hosts in line with them. Calls are queued. */
 export function syncJarvis(): Promise<void> {
   syncTail = syncTail.then(runSync, runSync);
   return syncTail;
@@ -241,7 +243,7 @@ async function runSync(): Promise<void> {
   if (!token) return;
   setState({ syncing: true });
   try {
-    const response = await jarvisFetch("/api/remotes?harness=opencode");
+    const response = await jarvisFetch(JARVIS_REMOTES_PATH);
     if (!response.ok) throw new Error(`Jarvis answered ${response.status}`);
     const body = (await response.json()) as { sessions?: JarvisRemote[] };
     const sessions = body.sessions ?? [];

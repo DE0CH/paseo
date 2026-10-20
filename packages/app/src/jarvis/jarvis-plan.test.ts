@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { isAccessRefusal, parsePairRedirect, planJarvisSync, remoteLabel } from "./jarvis-plan";
+import {
+  harnessName,
+  isAccessRefusal,
+  JARVIS_REMOTES_PATH,
+  modelName,
+  parsePairRedirect,
+  planJarvisSync,
+  remoteDetail,
+  remoteLabel,
+} from "./jarvis-plan";
 
 const OFFER = "https://app.paseo.sh/#offer=abc";
 
@@ -95,5 +104,42 @@ describe("isAccessRefusal", () => {
     expect(isAccessRefusal({ finalUrl, status: 403, contentType: "text/html" })).toBe(true);
     expect(isAccessRefusal({ finalUrl, status: 403, contentType: "application/json" })).toBe(false);
     expect(isAccessRefusal({ finalUrl, status: 200, contentType: "application/json" })).toBe(false);
+  });
+});
+
+describe("listing", () => {
+  it("asks Jarvis for every Paseo-fronted session (OpenCode and Claude Code)", () => {
+    expect(JARVIS_REMOTES_PATH).toBe("/api/remotes?harness=paseo");
+  });
+
+  it("names the harness and the model", () => {
+    expect(harnessName("opencode")).toBe("OpenCode");
+    expect(harnessName("paseo-claude")).toBe("Claude Code");
+    expect(harnessName(undefined)).toBeNull();
+    expect(modelName("paseo/claude-opus-5-5")).toBe("claude-opus-5-5");
+    expect(modelName("openrouter/z-ai/glm-5")).toBe("glm-5");
+    expect(remoteDetail({ harness: "paseo-claude", model: "paseo/claude-fable-5-1" })).toBe(
+      "Claude Code · claude-fable-5-1",
+    );
+    expect(remoteDetail({ harness: "opencode", model: null })).toBe("OpenCode");
+    expect(remoteDetail({})).toBeNull();
+  });
+
+  it("imports Claude Code sessions like OpenCode ones (same pairing link)", () => {
+    const plan = planJarvisSync({
+      remotes: [
+        { id: "s1", title: "OpenCode one", state: "started", harness: "opencode", pairUrl: OFFER },
+        {
+          id: "s2",
+          title: "Claude one",
+          state: "started",
+          harness: "paseo-claude",
+          pairUrl: OFFER + "2",
+        },
+      ],
+      imports: {},
+      hosts: [],
+    });
+    expect(plan.upserts.map((u) => u.sessionId)).toEqual(["s1", "s2"]);
   });
 });

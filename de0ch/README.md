@@ -4,7 +4,7 @@ Deyao's own build of the Paseo iOS app (`APP_VARIANT=de0ch`, bundle `dev.de0ch.p
 team S64YL394S3). Upstream code stays as it is apart from these hooks, so the fork rebases cleanly:
 
 - `packages/app/src/jarvis/`: pairs the install with Jarvis once (`/api/devices/pair?app=paseo` →
-  `paseo-de0ch://paired`), lists OpenCode sessions (`/api/remotes?harness=opencode`) and imports each
+  `paseo-de0ch://paired`), lists every Paseo-fronted session, OpenCode and Claude Code · Paseo (`/api/remotes?harness=paseo`) and imports each
   started one as a host named after its title. It removes hosts of destroyed sessions and can start
   paused ones. Settings → Jarvis.
 - Small hooks into upstream files: the `de0ch` variant in `app.config.js`, a settings section,

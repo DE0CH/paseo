@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Simulator test for Deyao's build: launch the app with a Jarvis token (launch arguments, never
 # saved by the app), open Settings → Jarvis, and check with Maestro that it is paired and — when
-# Jarvis has a started OpenCode session — that the session is imported, named, and goes Online.
+# Jarvis has a started Paseo session — that the session is imported, named, and goes Online.
 # Usage: simulator-test.sh <path to Paseo.app>   env: JARVIS_E2E_CLIENT_ID / _SECRET, JARVIS_URL
 set -euo pipefail
 APP="$1"
@@ -32,11 +32,11 @@ xcrun simctl boot "$UDID"
 xcrun simctl bootstatus "$UDID" -b
 xcrun simctl install "$UDID" "$APP"
 
-# The session to look for: the first started OpenCode session whose daemon answers. Jarvis 2 admits a service token
+# The session to look for: the first started Paseo session (OpenCode or Claude Code) whose daemon answers. Jarvis 2 admits a service token
 # only when it is a paired device's: while the e2e token isn't one, the Jarvis checks are skipped (the app is still
 # installed, launched and screenshotted) and the run says so.
 code=$(curl -sS -o "$OUT/remotes.json" -w '%{http_code}' -H "CF-Access-Client-Id: $JARVIS_E2E_CLIENT_ID" \
-  -H "CF-Access-Client-Secret: $JARVIS_E2E_CLIENT_SECRET" "$JARVIS_URL/api/remotes?harness=opencode" || true)
+  -H "CF-Access-Client-Secret: $JARVIS_E2E_CLIENT_SECRET" "$JARVIS_URL/api/remotes?harness=paseo" || true)
 if [[ "$code" != 200 ]]; then
   echo "::warning::$JARVIS_URL/api/remotes answered $code to the e2e token (not a paired Jarvis 2 device): Jarvis checks skipped"
   xcrun simctl launch "$UDID" dev.de0ch.paseo
@@ -70,7 +70,7 @@ if [[ $status -eq 0 && -n "${SESSION_ID:-}" ]]; then
     -e SESSION_ID="$SESSION_ID" -e SESSION_TITLE="$SESSION_TITLE" \
     "$HERE/maestro/jarvis-session.yaml" || status=$?
 elif [[ $status -eq 0 ]]; then
-  echo "No started OpenCode session in Jarvis: checked pairing only."
+  echo "No started Paseo session in Jarvis: checked pairing only."
 fi
 xcrun simctl io "$UDID" screenshot "$OUT/final.png" || true
 xcrun simctl shutdown "$UDID" || true

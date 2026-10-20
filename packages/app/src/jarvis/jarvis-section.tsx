@@ -18,7 +18,7 @@ import {
   unpairJarvis,
   useJarvisState,
 } from "./jarvis";
-import { remoteLabel, type JarvisRemote } from "./jarvis-plan";
+import { remoteDetail, remoteLabel, type JarvisRemote } from "./jarvis-plan";
 
 const STATUS_TEXT: Record<HostRuntimeConnectionStatus, string> = {
   online: "Online",
@@ -27,11 +27,6 @@ const STATUS_TEXT: Record<HostRuntimeConnectionStatus, string> = {
   error: "Offline",
   idle: "Not connected",
 };
-
-function modelName(model: string | null | undefined): string | null {
-  if (!model) return null;
-  return model.split("/").pop() ?? model;
-}
 
 export function JarvisSection() {
   const jarvis = useJarvisState();
@@ -56,7 +51,7 @@ export function JarvisSection() {
           <SettingsCard>
             <SettingsRow
               label="Pair with Jarvis"
-              hint="Sign in to Jarvis once. Every OpenCode session then shows up here and in your hosts, with no pairing links."
+              hint="Sign in to Jarvis once. Every OpenCode and Claude Code session then shows up here and in your hosts, with no pairing links."
               error={jarvis.error ?? undefined}
             >
               <Button
@@ -98,12 +93,12 @@ export function JarvisSection() {
           </SettingsRow>
         </SettingsCard>
       </SettingsSection>
-      <SettingsSection title="OpenCode sessions">
+      <SettingsSection title="Jarvis sessions">
         <SettingsCard testID="jarvis-sessions">
           {jarvis.sessions.length === 0 ? (
             <SettingsRow
-              label={jarvis.lastSyncAt ? "No OpenCode sessions" : "Loading…"}
-              hint="Start one from Jarvis with an OpenRouter model."
+              label={jarvis.lastSyncAt ? "No sessions" : "Loading…"}
+              hint="Start one from Jarvis with the OpenCode or Claude Code · Paseo harness."
             />
           ) : (
             jarvis.sessions.map((session) => (
@@ -131,12 +126,12 @@ function JarvisSessionRow({
   starting: boolean;
 }) {
   const label = remoteLabel(session);
-  const model = modelName(session.model);
+  const detail = remoteDetail(session);
   const isStarted = session.state === "started" && Boolean(session.pairUrl) && serverId;
 
   if (isStarted && serverId) {
     return (
-      <StartedSessionRow label={label} model={model} serverId={serverId} sessionId={session.id} />
+      <StartedSessionRow label={label} detail={detail} serverId={serverId} sessionId={session.id} />
     );
   }
 
@@ -153,7 +148,7 @@ function JarvisSessionRow({
   return (
     <SettingsRow
       label={label}
-      hint={[status, model].filter(Boolean).join(" · ")}
+      hint={[status, detail].filter(Boolean).join(" · ")}
       testID={`jarvis-session-${session.id}`}
     >
       {action}
@@ -172,12 +167,12 @@ function StartButton({ sessionId }: { sessionId: string }) {
 
 function StartedSessionRow({
   label,
-  model,
+  detail,
   serverId,
   sessionId,
 }: {
   label: string;
-  model: string | null;
+  detail: string | null;
   serverId: string;
   sessionId: string;
 }) {
@@ -189,7 +184,7 @@ function StartedSessionRow({
     <SettingsRow
       label={label}
       labelAccessory={dot}
-      hint={[STATUS_TEXT[status], model].filter(Boolean).join(" · ")}
+      hint={[STATUS_TEXT[status], detail].filter(Boolean).join(" · ")}
       testID={`jarvis-session-${sessionId}`}
     >
       <Button variant="outline" size="sm" onPress={open} testID={`jarvis-open-${sessionId}`}>

@@ -20,6 +20,6 @@ appId: dev.de0ch.paseo
     visible: "Paired with Jarvis"
     timeout: 60000
 - extendedWaitUntil:
-    visible: "OpenCode sessions"
+    visible: "Jarvis sessions"
     timeout: 10000
 - takeScreenshot: jarvis-paired

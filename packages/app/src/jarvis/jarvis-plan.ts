@@ -9,6 +9,8 @@ export interface JarvisRemote {
   title: string | null;
   state: JarvisSessionState;
   model?: string | null;
+  /** The session's harness: "opencode" (OpenCode, OpenRouter models) or "paseo-claude" (Claude Code). */
+  harness?: string | null;
   pairUrl?: string | null;
   error?: string | null;
 }
@@ -28,6 +30,31 @@ export interface JarvisSyncPlan {
   renames: { serverId: string; label: string }[];
   /** Hosts of sessions Jarvis no longer lists (destroyed). */
   removals: { sessionId: string; serverId: string }[];
+}
+
+/**
+ * What the app asks Jarvis for. harness=paseo is every session a Paseo daemon fronts (OpenCode and
+ * Claude Code · Paseo), each listed once (jarvis2 router/remote.go `remotes`).
+ */
+export const JARVIS_REMOTES_PATH = "/api/remotes?harness=paseo";
+
+/** A short name for the agent a session runs, shown next to its model. */
+export function harnessName(harness: string | null | undefined): string | null {
+  if (harness === "opencode") return "OpenCode";
+  if (harness === "paseo-claude") return "Claude Code";
+  return harness ? harness : null;
+}
+
+/** The model's own name, without its provider prefix ("paseo/claude-opus-5-5" -> "claude-opus-5-5"). */
+export function modelName(model: string | null | undefined): string | null {
+  if (!model) return null;
+  return model.split("/").pop() || model;
+}
+
+/** The session row's detail line after its status: harness and model. */
+export function remoteDetail(remote: Pick<JarvisRemote, "harness" | "model">): string | null {
+  const parts = [harnessName(remote.harness), modelName(remote.model)].filter(Boolean);
+  return parts.length ? parts.join(" · ") : null;
 }
 
 export function remoteLabel(remote: Pick<JarvisRemote, "id" | "title">): string {

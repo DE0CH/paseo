@@ -1,4 +1,4 @@
-# A started OpenCode session (SESSION_ID / SESSION_TITLE from Jarvis) is imported and connects.
+# A started Paseo session (OpenCode or Claude Code) (SESSION_ID / SESSION_TITLE from Jarvis) is imported and connects.
 appId: dev.de0ch.paseo
 ---
 - runFlow:
