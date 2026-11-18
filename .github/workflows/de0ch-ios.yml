@@ -10,8 +10,8 @@ on:
         description: "Upload to TestFlight after the simulator test"
         type: boolean
         default: true
-  push:
-    branches: [main]
+  push:  # every branch (the gate merges a branch when this is green); main alone uploads
+    branches: ['**']
     paths:
       - "packages/app/**"
       - "packages/client/**"
@@ -21,7 +21,7 @@ on:
       - "package-lock.json"
 
 concurrency:
-  group: de0ch-ios
+  group: "de0ch-ios-${{ github.ref }}"
   cancel-in-progress: false
 
 env:
@@ -85,7 +85,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive, sign and upload to TestFlight
-        if: github.event_name == 'push' || inputs.upload
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || inputs.upload
         working-directory: packages/app/ios
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
